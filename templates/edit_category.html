@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}
+カテゴリー編集
+{% endblock %}
+
+
+{% block content %}
+
+<h2 class="mb-4">
+    カテゴリー編集
+</h2>
+
+
+<form method="POST">
+
+
+    <!-- アイコン -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            アイコン
+        </label>
+
+        <select
+            name="icon"
+            class="form-select"
+        >
+
+            <option value="🍚" {% if category.icon == "🍚" %}selected{% endif %}>
+                🍚
+            </option>
+
+            <option value="🚃" {% if category.icon == "🚃" %}selected{% endif %}>
+                🚃
+            </option>
+
+            <option value="🎮" {% if category.icon == "🎮" %}selected{% endif %}>
+                🎮
+            </option>
+
+            <option value="🛒" {% if category.icon == "🛒" %}selected{% endif %}>
+                🛒
+            </option>
+
+            <option value="💰" {% if category.icon == "💰" %}selected{% endif %}>
+                💰
+            </option>
+
+            <option value="📦" {% if category.icon == "📦" %}selected{% endif %}>
+                📦
+            </option>
+
+            <option value="☕" {% if category.icon == "☕" %}selected{% endif %}>
+                ☕
+            </option>
+
+            <option value="🍔" {% if category.icon == "🍔" %}selected{% endif %}>
+                🍔
+            </option>
+
+            <option value="🏠" {% if category.icon == "🏠" %}selected{% endif %}>
+                🏠
+            </option>
+
+            <option value="🎁" {% if category.icon == "🎁" %}selected{% endif %}>
+                🎁
+            </option>
+
+            <option value="📱" {% if category.icon == "📱" %}selected{% endif %}>
+                📱
+            </option>
+
+            <option value="🚗" {% if category.icon == "🚗" %}selected{% endif %}>
+                🚗
+            </option>
+
+        </select>
+
+    </div>
+
+
+
+    <!-- 名前 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            カテゴリー名
+        </label>
+
+
+        <input
+            type="text"
+            name="name"
+            class="form-control"
+            value="{{ category.name }}"
+            required
+        >
+
+    </div>
+
+
+
+    <!-- 種類 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            種類
+        </label>
+
+
+        <select
+            name="type"
+            class="form-select"
+        >
+
+            <option value="支出"
+            {% if category.type == "支出" %}selected{% endif %}>
+                支出
+            </option>
+
+
+            <option value="収入"
+            {% if category.type == "収入" %}selected{% endif %}>
+                収入
+            </option>
+
+
+        </select>
+
+
+    </div>
+
+
+
+    <button class="btn btn-primary">
+        更新
+    </button>
+
+
+    <a
+        href="{{ url_for('category.index') }}"
+        class="btn btn-secondary"
+    >
+        戻る
+    </a>
+
+
+</form>
+
+
+{% endblock %}

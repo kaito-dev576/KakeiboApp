@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}
+カテゴリー管理
+{% endblock %}
+
+{% block content %}
+
+<h2 class="mb-4">カテゴリー管理</h2>
+
+<form method="POST" class="mb-4">
+
+    <div class="mb-3">
+
+        <label class="form-label">
+            種類
+        </label>
+
+        <select
+            name="type"
+            class="form-select"
+        >
+            <option value="支出">支出</option>
+            <option value="収入">収入</option>
+        </select>
+
+    </div>
+
+    <div class="input-group">
+
+        <select
+            name="icon"
+            class="form-select"
+            style="max-width:120px;"
+        >
+            <option value="🍚">🍚</option>
+            <option value="🚃">🚃</option>
+            <option value="🎮">🎮</option>
+            <option value="🛒">🛒</option>
+            <option value="💰">💰</option>
+            <option value="📦">📦</option>
+            <option value="☕">☕</option>
+            <option value="🍔">🍔</option>
+            <option value="🏠">🏠</option>
+            <option value="🎁">🎁</option>
+            <option value="📱">📱</option>
+            <option value="🚗">🚗</option>
+        </select>
+
+        <input
+            type="text"
+            name="name"
+            class="form-control"
+            placeholder="カテゴリー名"
+            required
+        >
+
+        <button
+            class="btn btn-primary"
+            type="submit"
+        >
+            追加
+        </button>
+
+    </div>
+
+</form>
+
+<h3 class="mt-4 mb-3">支出カテゴリー</h3>
+
+<ul class="list-group mb-4">
+{% for category in categories if category.type == "支出" %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+            {{ category.icon }}
+            {{ category.name }}
+        </span>
+
+        <div>
+            <a
+                href="{{ url_for('category.edit', id=category.id) }}"
+                class="btn btn-warning btn-sm"
+            >
+                編集
+            </a>
+
+            <form
+                action="{{ url_for('category.delete', id=category.id) }}"
+                method="POST"
+                style="display:inline;"
+            >
+                <button
+                    class="btn btn-danger btn-sm"
+                    onclick="return confirm('削除しますか？')"
+                >
+                    削除
+                </button>
+            </form>
+        </div>
+    </li>
+{% endfor %}
+</ul>
+
+<h3 class="mt-4 mb-3">収入カテゴリー</h3>
+
+<ul class="list-group">
+{% for category in categories if category.type == "収入" %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>
+            {{ category.icon }}
+            {{ category.name }}
+        </span>
+
+        <div>
+            <a
+                href="{{ url_for('category.edit', id=category.id) }}"
+                class="btn btn-warning btn-sm"
+            >
+                編集
+            </a>
+
+            <form
+                action="{{ url_for('category.delete', id=category.id) }}"
+                method="POST"
+                style="display:inline;"
+            >
+                <button
+                    class="btn btn-danger btn-sm"
+                    onclick="return confirm('削除しますか？')"
+                >
+                    削除
+                </button>
+            </form>
+        </div>
+    </li>
+{% endfor %}
+</ul>
+
+
+
+
+{% endblock %}

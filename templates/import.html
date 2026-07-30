@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}CSV復元{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">CSV復元</h1>
+
+<div class="alert alert-warning">
+    同じCSVを複数回読み込むと、取引も重複して登録されます。
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label class="form-label">バックアップCSVファイル</label>
+
+        <input
+            type="file"
+            name="file"
+            class="form-control"
+            accept=".csv"
+            required
+        >
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        CSVを復元する
+    </button>
+</form>
+{% endblock %}

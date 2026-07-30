@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <title>支出登録</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+<h1>支出登録</h1>
+
+<form method="POST">
+
+    {% if error %}
+    <div class="alert alert-danger">
+        {{ error }}
+    </div>
+    {% endif %}
+
+
+    <!-- 金額 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            金額
+        </label>
+
+        <input
+            type="number"
+            name="price"
+            class="form-control"
+            min="1"
+            value="{{ price if price else '' }}"
+        >
+
+    </div>
+
+
+
+    <!-- 日付 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            日付
+        </label>
+
+        <input
+            type="date"
+            name="date"
+            class="form-control"
+            value="{{ request.form.get('date', today) }}"
+        >
+
+    </div>
+
+
+
+
+    <!-- 種類 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            種類
+        </label>
+
+        <select
+            name="type"
+            id="typeSelect"
+            class="form-select"
+        >
+
+            <option value="支出"
+            {% if transaction_type == "支出" %}selected{% endif %}>
+                支出
+            </option>
+
+
+            <option value="収入"
+            {% if transaction_type == "収入" %}selected{% endif %}>
+                収入
+            </option>
+
+        </select>
+
+    </div>
+
+
+
+
+    <!-- カテゴリー -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            カテゴリー
+        </label>
+
+
+        <select
+            name="category"
+            id="categorySelect"
+            class="form-select"
+            required
+        >
+
+            <option value="">
+                カテゴリーを選択してください
+            </option>
+
+
+            {% for category in categories %}
+            <option
+                value="{{ category.name }}"
+                data-type="{{ category.type }}"
+            >
+                {{ category.icon }} {{ category.name }}
+            </option>
+            {% endfor %}
+
+        </select>
+
+
+    </div>
+
+
+
+
+    <!-- メモ -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            メモ
+        </label>
+
+
+        <textarea
+            name="memo"
+            class="form-control"
+            rows="3"
+            placeholder="例：友達とランチ"
+        >{{ request.form.get("memo", "") }}</textarea>
+
+
+    </div>
+
+
+
+
+    <button class="btn btn-primary">
+        登録
+    </button>
+
+
+</form>
+
+</div>
+
+
+<script>
+
+    const typeSelect = document.getElementById("typeSelect");
+    const categorySelect = document.getElementById("categorySelect");
+
+
+    function filterCategory(){
+
+        const selectedType = typeSelect.value;
+
+        for (const option of categorySelect.options){
+
+            if(option.value === ""){
+                continue;
+            }
+
+            option.hidden = option.dataset.type !== selectedType;
+
+        }
+        categorySelect.value = "";
+        
+
+    }
+
+
+    typeSelect.addEventListener(
+        "change",
+        filterCategory
+    );
+
+
+    filterCategory();
+
+</script>
+
+
+
+</body>
+
+</html>

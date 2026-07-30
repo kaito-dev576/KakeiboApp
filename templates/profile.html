@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}
+プロフィール
+{% endblock %}
+
+{% block content %}
+
+<h1>プロフィール</h1>
+
+<div class="card mt-4">
+    <div class="card-body">
+
+        <h5 class="card-title">
+            ユーザー情報
+        </h5>
+
+        <p>
+            ユーザー名：
+            <strong>{{ user.username }}</strong>
+        </p>
+
+    </div>
+</div>
+
+<a href="{{ url_for('expense.index') }}" class="btn btn-primary mt-3">
+    戻る
+</a>
+
+<div class="card mt-4">
+    <div class="card-body">
+
+        <h5 class="card-title">
+            ユーザー名変更
+        </h5>
+
+        {% if error %}
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <form method="POST">
+
+            <div class="mb-3">
+                <label class="form-label">
+                    新しいユーザー名
+                </label>
+
+                <input
+                    type="text"
+                    name="username"
+                    class="form-control"
+                    value="{{ user.username }}"
+                >
+            </div>
+
+            <button class="btn btn-primary">
+                変更する
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+
+        <h5 class="card-title">
+            パスワード変更
+        </h5>
+
+        <form method="POST">
+
+            <div class="mb-3">
+                <label class="form-label">
+                    現在のパスワード
+                </label>
+
+                <input
+                    type="password"
+                    name="current_password"
+                    class="form-control"
+                >
+            </div>
+
+
+            <div class="mb-3">
+                <label class="form-label">
+                    新しいパスワード
+                </label>
+
+                <input
+                    type="password"
+                    name="new_password"
+                    class="form-control"
+                >
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">
+                    新しいパスワード（確認）
+                </label>
+
+                <input
+                    type="password"
+                    name="confirm_password"
+                    class="form-control"
+                >
+            </div>
+
+
+            <button class="btn btn-warning">
+                パスワード変更
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

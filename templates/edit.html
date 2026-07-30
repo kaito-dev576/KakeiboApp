@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>支出を編集</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+
+<body>
+
+<div class="container mt-4">
+
+<h1>支出を編集</h1>
+
+
+<form method="POST">
+
+
+    <!-- 金額 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            金額
+        </label>
+
+        <input
+            type="number"
+            name="price"
+            class="form-control"
+            min="1"
+            value="{{ expense.price }}"
+            required
+        >
+
+    </div>
+
+
+
+    <!-- 種類 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            種類
+        </label>
+
+
+        <select
+            name="type"
+            id="type"
+            class="form-select"
+        >
+
+            <option value="支出"
+            {% if expense.type == "支出" %}selected{% endif %}>
+                支出
+            </option>
+
+
+            <option value="収入"
+            {% if expense.type == "収入" %}selected{% endif %}>
+                収入
+            </option>
+
+
+        </select>
+
+    </div>
+
+
+
+
+    <!-- カテゴリー -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            カテゴリー
+        </label>
+
+
+        <select
+            name="category"
+            id="category"
+            class="form-select"
+            required
+        >
+
+
+            {% for item in categories %}
+
+
+            <option
+                value="{{ item.name }}"
+                data-type="{{ item.type }}"
+                {% if expense.category == item.name %}selected{% endif %}
+            >
+
+                {{ item.icon }} {{ item.name }}
+
+            </option>
+
+
+            {% endfor %}
+
+
+        </select>
+
+
+    </div>
+
+
+
+
+    <!-- 日付 -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            日付
+        </label>
+
+
+        <input
+            type="date"
+            name="date"
+            class="form-control"
+            value="{{ expense.date.strftime('%Y-%m-%d') }}"
+        >
+
+    </div>
+
+
+
+
+
+    <!-- メモ -->
+    <div class="mb-3">
+
+        <label class="form-label">
+            メモ
+        </label>
+
+
+        <textarea
+            name="memo"
+            class="form-control"
+            rows="3"
+        >{{ expense.memo }}</textarea>
+
+
+    </div>
+
+
+
+    <button class="btn btn-primary">
+        更新
+    </button>
+
+
+    <a
+        href="{{ url_for('expense.index') }}"
+        class="btn btn-secondary"
+    >
+        戻る
+    </a>
+
+
+</form>
+
+
+</div>
+
+
+
+<script>
+
+const typeSelect = document.getElementById("type");
+const categorySelect = document.getElementById("category");
+
+
+function filterCategory(){
+
+    const selectedType = typeSelect.value;
+
+
+    for(let option of categorySelect.options){
+
+
+        if(option.dataset.type === selectedType){
+
+            option.hidden = false;
+
+        }else{
+
+            option.hidden = true;
+
+        }
+
+    }
+
+
+}
+
+
+typeSelect.addEventListener(
+    "change",
+    filterCategory
+);
+
+
+filterCategory();
+
+
+</script>
+
+
+</body>
+
+</html>

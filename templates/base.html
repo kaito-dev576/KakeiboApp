@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}家計簿アプリ{% endblock %}</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg bg-body-tertiary mb-4">
+    <div class="container">
+
+        <a class="navbar-brand" href="{{ url_for('expense.index') }}">
+            家計簿アプリ
+        </a>
+
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+
+            {% if session.get("user_id") %}
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('expense.index') }}">
+                        ホーム
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('category.index') }}">
+                        カテゴリー管理
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('budget.budget_page') }}">
+                        予算管理
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('export.export_csv') }}">
+                        CSV出力
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('export.import_csv') }}">
+                        CSV復元
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <span class="navbar-text">
+                    {{ user.username }} さん
+                </span>
+
+                <a
+                    href="{{ url_for('profile.profile_page') }}"
+                    class="btn btn-outline-primary btn-sm"
+                >
+                    プロフィール
+                </a>
+
+                <button
+                    id="themeBtn"
+                    class="btn btn-outline-secondary btn-sm"
+                    type="button"
+                >
+                    ダークモード
+                </button>
+
+                <a
+                    href="{{ url_for('auth.logout') }}"
+                    class="btn btn-outline-danger btn-sm"
+                >
+                    ログアウト
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</nav>
+
+<main class="container mb-5">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div
+                class="alert alert-{{ category }} alert-dismissible fade show flash-message"
+                role="alert"
+            >
+                {{ message }}
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                ></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const themeButton = document.getElementById("themeBtn");
+
+    if (themeButton) {
+        let theme = localStorage.getItem("theme") || "light";
+
+        function applyTheme(selectedTheme) {
+            document.documentElement.setAttribute(
+                "data-bs-theme",
+                selectedTheme
+            );
+
+            themeButton.textContent =
+                selectedTheme === "dark"
+                    ? "ライトモード"
+                    : "ダークモード";
+        }
+
+        applyTheme(theme);
+
+        themeButton.addEventListener("click", () => {
+            theme = theme === "dark" ? "light" : "dark";
+            applyTheme(theme);
+            localStorage.setItem("theme", theme);
+        });
+    }
+
+    document.querySelectorAll(".flash-message").forEach((message) => {
+        setTimeout(() => {
+            bootstrap.Alert.getOrCreateInstance(message).close();
+        }, 3000);
+    });
+</script>
+
+</body>
+</html>
