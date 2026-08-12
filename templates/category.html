@@ -9,6 +9,7 @@
 <h2 class="mb-4">カテゴリー管理</h2>
 
 <form method="POST" class="mb-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="mb-3">
 
@@ -18,6 +19,7 @@
 
         <select
             name="type"
+            id="categoryType"
             class="form-select"
         >
             <option value="支出">支出</option>
@@ -30,21 +32,24 @@
 
         <select
             name="icon"
+            id="iconSelect"
             class="form-select"
-            style="max-width:120px;"
+            style="max-width:140px;"
         >
-            <option value="🍚">🍚</option>
-            <option value="🚃">🚃</option>
-            <option value="🎮">🎮</option>
-            <option value="🛒">🛒</option>
-            <option value="💰">💰</option>
-            <option value="📦">📦</option>
-            <option value="☕">☕</option>
-            <option value="🍔">🍔</option>
-            <option value="🏠">🏠</option>
-            <option value="🎁">🎁</option>
-            <option value="📱">📱</option>
-            <option value="🚗">🚗</option>
+           <option value="🍚" data-type="支出">🍚 食費</option>
+            <option value="🛒" data-type="支出">🛒 日用品</option>
+            <option value="🚃" data-type="支出">🚃 交通費</option>
+            <option value="🏠" data-type="支出">🏠 家賃</option>
+            <option value="💡" data-type="支出">💡 光熱費</option>
+            <option value="📱" data-type="支出">📱 通信費</option>
+            <option value="🎮" data-type="支出">🎮 趣味</option>
+            <option value="💊" data-type="支出">💊 医療費</option>
+
+            <option value="💰" data-type="収入">💰 給与</option>
+            <option value="💵" data-type="収入">💵 副収入</option>
+            <option value="🎁" data-type="収入">🎁 臨時収入</option>
+            <option value="📈" data-type="収入">📈 投資・配当</option>
+
         </select>
 
         <input
@@ -89,6 +94,7 @@
                 method="POST"
                 style="display:inline;"
             >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button
                     class="btn btn-danger btn-sm"
                     onclick="return confirm('削除しますか？')"
@@ -124,6 +130,7 @@
                 method="POST"
                 style="display:inline;"
             >
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button
                     class="btn btn-danger btn-sm"
                     onclick="return confirm('削除しますか？')"
@@ -136,7 +143,30 @@
 {% endfor %}
 </ul>
 
+<script>
+    const categoryType = document.getElementById("categoryType");
+    const iconSelect = document.getElementById("iconSelect");
 
+    function filterIcons() {
+        const selectedType = categoryType.value;
+
+        for (const option of iconSelect.options) {
+            option.hidden = option.dataset.type !== selectedType;
+        }
+
+        const firstVisibleOption = [...iconSelect.options].find(
+            option => !option.hidden
+        );
+
+        if (firstVisibleOption) {
+            iconSelect.value = firstVisibleOption.value;
+        }
+    }
+
+    categoryType.addEventListener("change", filterIcons);
+
+    filterIcons();
+</script>
 
 
 {% endblock %}

@@ -40,6 +40,7 @@ def export_csv():
             expense.memo
         ])
 
+    # Excelで日本語が文字化けしにくいよう、UTF-8のBOMを付ける
     response = Response(
         "\ufeff" + output.getvalue(),
         mimetype="text/csv; charset=utf-8"
@@ -70,6 +71,7 @@ def import_csv():
             return redirect(url_for("export.import_csv"))
 
         try:
+            # CSV出力時に付けたBOMを考慮して、UTF-8形式で読み込む
             content = file.stream.read().decode("utf-8-sig")
             reader = csv.DictReader(io.StringIO(content))
         except UnicodeDecodeError:
@@ -104,6 +106,7 @@ def import_csv():
                     name=category_name
                 ).first()
 
+                # バックアップ内のカテゴリーが存在しない場合は、復元と同時に作成する
                 if not category:
                     category = Category(
                         user_id=session["user_id"],

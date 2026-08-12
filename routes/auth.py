@@ -80,6 +80,7 @@ def register():
             )
             db.session.add(category)
 
+        # sessionに利用者IDを保存し、以降の画面でログイン中の利用者を識別する
         db.session.commit()
 
         session["user_id"] = user.id
@@ -89,7 +90,8 @@ def register():
     return render_template("register.html")
 
 
-@auth.route("/logout")
+@auth.route("/logout", methods=["POST"])
+@login_required
 def logout():
 
     session.pop("user_id", None)

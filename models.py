@@ -81,5 +81,13 @@ class Budget(db.Model):
     month = db.Column(db.Integer, nullable=False)
     budget = db.Column(db.Integer, nullable=False)
 
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id",
+            "year",
+            "month",
+            name="unique_user_month_budget",
+        ),
+    )
 
-    
+

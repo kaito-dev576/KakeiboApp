@@ -22,6 +22,7 @@ def index():
             flash("カテゴリー名を入力してください", "danger")
             return redirect(url_for("category.index"))
 
+        # 同じ利用者が同名カテゴリーを複数作らないようにする
         existing = Category.query.filter_by(
             user_id=session["user_id"],
             name=name
@@ -52,9 +53,6 @@ def index():
         .all()
     )
 
-    for c in categories:
-        print(c.name, c.icon, c.type)
-
     return render_template(
         "category.html",
         categories=categories
@@ -70,6 +68,7 @@ def delete(id):
         flash("操作できません", "danger")
         return redirect(url_for("category.index"))
 
+    # 過去の取引で使われているカテゴリーは削除できないようにする
     transaction_count = Expense.query.filter_by(
         user_id=session["user_id"],
         category=category_item.name
@@ -100,7 +99,7 @@ def edit(id):
 
     if request.method == "POST":
 
-        name = request.form["name"]
+        name = request.form["name"].strip()
         icon = request.form["icon"]
         category_type = request.form["type"]
 
@@ -119,6 +118,7 @@ def edit(id):
             flash("そのカテゴリーはすでに存在します", "danger")
             return redirect(url_for("category.edit", id=id))
 
+        # 使用済みカテゴリーを支出から収入へ変更すると過去の取引と矛盾するため防ぐ
         if category_type != category_item.type:
             transaction_count = Expense.query.filter_by(
                 user_id=session["user_id"],
@@ -131,6 +131,12 @@ def edit(id):
                     "danger"
                 )
                 return redirect(url_for("category.edit", id=id))
+
+        old_name = category_item.name
+        Expense.query.filter_by(
+            user_id=session["user_id"],
+            category=old_name,
+        ).update({Expense.category: name}, synchronize_session=False)
 
         category_item.name = name
         category_item.icon = icon

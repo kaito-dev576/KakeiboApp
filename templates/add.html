@@ -6,16 +6,18 @@
     <title>支出登録</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
 </head>
 
 <body>
 
-<div class="container mt-4">
+<div class="container form-page mt-4">
 
-<h1>支出登録</h1>
+<h1>取引を追加</h1>
 
 <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     {% if error %}
     <div class="alert alert-danger">
@@ -154,6 +156,8 @@
     <button class="btn btn-primary">
         登録
     </button>
+
+    <a href="{{ url_for('expense.index') }}" class="btn btn-outline-secondary">キャンセル</a>
 
 
 </form>

@@ -61,7 +61,8 @@ def add():
                 today=date.today().strftime("%Y-%m-%d")
             )
 
-
+        # フォームで送られたカテゴリーが、ログイン中の利用者のものか確認する
+        # 支出・収入の種類が違うカテゴリーも登録できないようにする
         selected_category = Category.query.filter_by(
             user_id=session["user_id"],
             name=category,
@@ -72,11 +73,22 @@ def add():
             flash("選択したカテゴリーは使用できません。", "danger")
             return redirect(url_for("expense.add"))
 
-        expense_date = (
-            date.fromisoformat(date_text)
-            if date_text
-            else date.today()
-        )
+        try:
+            expense_date = (
+                date.fromisoformat(date_text)
+                if date_text
+                else date.today()
+            )
+        except ValueError:
+            return render_template(
+                "add.html",
+                error="正しい日付を入力してください",
+                price=price_text,
+                category=category,
+                transaction_type=transaction_type,
+                categories=categories,
+                today=date.today().strftime("%Y-%m-%d")
+            )
 
         expense = Expense(
             user_id=session["user_id"],
@@ -116,6 +128,7 @@ def edit(id):
 
     expense = Expense.query.get_or_404(id)
 
+    # URLの番号を変更しても、他人の取引は操作できないようにする
     if expense.user_id != session["user_id"]:
         flash("この取引は操作できません。", "danger")
         return redirect(url_for("expense.index"))
@@ -153,7 +166,11 @@ def edit(id):
         date_text = request.form.get("date")
 
         if date_text:
-            expense.date = date.fromisoformat(date_text)
+            try:
+                expense.date = date.fromisoformat(date_text)
+            except ValueError:
+                flash("正しい日付を入力してください。", "danger")
+                return redirect(url_for("expense.edit", id=id))
 
         db.session.commit()
 
@@ -181,6 +198,7 @@ def delete(id):
 
     expense = Expense.query.get_or_404(id)
 
+    # URLの番号を変更しても、他人の取引は操作できないようにする
     if expense.user_id != session["user_id"]:
         flash("この取引は操作できません。", "danger")
         return redirect(url_for("expense.index"))
@@ -209,6 +227,8 @@ def index():
 
     category = request.args.get("category")
     transaction_type = request.args.get("type")
+
+    # 取引一覧・検索・集計は、必ずログイン中の利用者のデータだけを対象にする
     query = Expense.query.filter_by(user_id=session["user_id"])
     
     
@@ -225,34 +245,37 @@ def index():
         type=int
     )
 
+    # 画面で選択された年の取引だけに絞り込む
     query = query.filter(
             extract("year", Expense.date) == selected_year
         )
 
-    if month:
-        year, month_num = month.split("-")
+    try:
+        if month:
+            year, month_num = month.split("-")
+            query = query.filter(
+                extract("year", Expense.date) == int(year),
+                extract("month", Expense.date) == int(month_num)
+            )
 
-        query = query.filter(
-            extract("year", Expense.date) == int(year),
-            extract("month", Expense.date) == int(month_num)
-        )
+        if start_date:
+            query = query.filter(
+                Expense.date >= datetime.strptime(
+                    start_date,
+                    "%Y-%m-%d"
+                ).date()
+            )
 
-    if start_date:
-        query = query.filter(
-            Expense.date >= datetime.strptime(
-                start_date,
-                "%Y-%m-%d"
-            ).date()
-        )
-
-
-    if end_date:
-        query = query.filter(
-            Expense.date <= datetime.strptime(
-                end_date,
-                "%Y-%m-%d"
-            ).date()
-        )
+        if end_date:
+            query = query.filter(
+                Expense.date <= datetime.strptime(
+                    end_date,
+                    "%Y-%m-%d"
+                ).date()
+            )
+    except (TypeError, ValueError):
+        flash("検索条件の日付が正しくありません。", "danger")
+        return redirect(url_for("expense.index"))
 
 
     if category:
@@ -263,25 +286,17 @@ def index():
             Expense.type == transaction_type
         )
 
-    if sort == "new":
-        expenses = query.order_by(
-            Expense.date.desc()
-        ).paginate(page=page, per_page=10)
-
-    elif sort == "old":
-        expenses = query.order_by(
-            Expense.date
-        ).paginate(page=page, per_page=10)
-
-    elif sort == "high":
-        expenses = query.order_by(
-            Expense.price.desc()
-        ).paginate(page=page, per_page=10)
-
-    elif sort == "low":
-        expenses = query.order_by(
-            Expense.price
-        ).paginate(page=page, per_page=10)
+    sort_columns = {
+        "new": Expense.date.desc(),
+        "old": Expense.date,
+        "high": Expense.price.desc(),
+        "low": Expense.price,
+    }
+    sort = sort if sort in sort_columns else "new"
+    expenses = query.order_by(sort_columns[sort]).paginate(
+        page=page,
+        per_page=10,
+    )
 
     income_total =(
         query.filter(Expense.type =="収入")
@@ -305,14 +320,28 @@ def index():
         .scalar() or 0
     )
 
+    current_month_expense = (
+        Expense.query.filter_by(
+            user_id=session["user_id"],
+            type="支出",
+        )
+        .filter(
+            extract("year", Expense.date) == today.year,
+            extract("month", Expense.date) == today.month,
+        )
+        .with_entities(func.sum(Expense.price))
+        .scalar() or 0
+    )
+
+    # 今月の支出額を基準に、残り予算と使用率を計算する
     if budget:
-        remaining_budget = budget.budget - expense_total
+        remaining_budget = budget.budget - current_month_expense
     else:
         remaining_budget = 0
 
     if budget:
         budget_percentage = int(
-            expense_total / budget.budget * 100
+            current_month_expense / budget.budget * 100
         )
 
         if budget_percentage > 100:
@@ -322,7 +351,7 @@ def index():
         budget_percentage = 0
 
     if budget:
-        over_budget = expense_total - budget.budget
+        over_budget = current_month_expense - budget.budget
     else:
         over_budget = 0
     
@@ -330,16 +359,7 @@ def index():
     count = query.count()
 
 
-    total = (
-        query.with_entities(func.sum(Expense.price)).scalar()
-        or 0
-    )
-
-    if count > 0:
-        average = total // count
-    else:
-        average = 0
-
+    # 円グラフとカテゴリー別ランキングに使う、支出カテゴリーごとの合計
     category_totals = (
         query.filter(Expense.type == "支出")
         .with_entities(
@@ -369,6 +389,7 @@ def index():
         .all()
     )
 
+    # 月別グラフに使う、収入・支出の月ごとの合計
     monthly_income = (
         query.filter(Expense.type == "収入")
         .with_entities(
@@ -392,7 +413,8 @@ def index():
 
 
     balance = income_total - expense_total
-    expense_difference = expense_total - last_month_expense
+    # 検索結果ではなく「今月」と「先月」を同じ条件で比較する。
+    expense_difference = current_month_expense - last_month_expense
 
     if last_month_expense > 0:
         expense_difference_percent = (
@@ -404,9 +426,7 @@ def index():
     return render_template(
         'index.html',
         expenses = expenses,
-        total = total,
         count = count,
-        average = average,
         category_totals = category_totals,
         income_total=income_total,
         expense_total=expense_total,
@@ -419,11 +439,14 @@ def index():
         budget_percentage=budget_percentage,
         over_budget=over_budget,
         last_month_expense=last_month_expense,
+        current_month_expense=current_month_expense,
         expense_difference = expense_difference,
         expense_difference_percent=expense_difference_percent,
         top_category=top_category,
         recent_expenses=recent_expenses,
         selected_year=selected_year,
+        budget_year=today.year,
+        budget_month=today.month,
     )
 
 
