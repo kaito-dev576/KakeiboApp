@@ -3,21 +3,53 @@
 {% block title %}家計簿アプリ{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="mb-1 fw-bold">家計のダッシュボード</h1>
-        <p class="text-body-secondary mb-0">
+<div class="dashboard-header">
+    <div class="dashboard-title">
+        <h1>収支管理</h1>
+
+        <p>
             {{ selected_year }}年の家計状況
         </p>
     </div>
 
-    <a href="{{ url_for('expense.add') }}" class="btn btn-primary">
-        ＋ 取引を追加
-    </a>
+    <div class="dashboard-actions">
+        <div class="dropdown">
+            <button
+                class="btn user-menu-button dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+            >
+                <span class="user-menu-icon" aria-hidden="true">👤</span>
+                <span class="user-menu-name">{{ user.username if user and user.username else "ユーザー" }}</span>
+            </button>
+
+            <ul class="dropdown-menu dropdown-menu-end user-menu-dropdown">
+                <li>
+                    <a class="dropdown-item" href="{{ url_for('profile.profile_page') }}">
+                        アカウント設定
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form method="POST" action="{{ url_for('auth.logout') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="dropdown-item text-danger">
+                            ログアウト
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+
+        <a href="{{ url_for('expense.add') }}" class="btn btn-primary add-transaction-button">
+            ＋ 取引を追加
+        </a>
+    </div>
 </div>
 
 <!-- 重要な数字 -->
-<div class="row g-3 mb-4 summary-grid">
+<div class="row g-4 mb-5 summary-grid">
     <div class="col-md-4">
         <div class="card h-100 summary-card summary-income border-0">
             <div class="card-body">
@@ -52,103 +84,9 @@
     </div>
 </div>
 
-<!-- 予算と最近の取引 -->
-<div class="row g-3 mb-4">
-    <div class="col-lg-5">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                <h2 class="h5 mb-0">{{ budget_year }}年{{ budget_month }}月の予算</h2>
-                    <a
-                        href="{{ url_for('budget.budget_page') }}"
-                        class="btn btn-outline-primary btn-sm"
-                    >
-                        設定
-                    </a>
-                </div>
-
-                {% if budget %}
-                    <div class="mt-4">
-                        <div class="d-flex justify-content-between">
-                            <span>予算額</span>
-                            <strong>{{ "{:,}".format(budget.budget|int) }}円</strong>
-                        </div>
-
-                        <div class="d-flex justify-content-between mt-2">
-                            <span>残り予算</span>
-                            <strong class="{% if remaining_budget < 0 %}text-danger{% else %}text-success{% endif %}">
-                                {{ "{:,}".format(remaining_budget|int) }}円
-                            </strong>
-                        </div>
-
-                        <div class="progress mt-3" style="height: 12px;">
-                            <div
-                                class="progress-bar {% if over_budget > 0 %}bg-danger{% else %}bg-success{% endif %}"
-                                style="width: {{ budget_percentage }}%;"
-                            ></div>
-                        </div>
-
-                        <div class="small text-body-secondary mt-2">
-                            使用率：{{ budget_percentage }}%
-                        </div>
-
-                        {% if over_budget > 0 %}
-                            <div class="alert alert-danger py-2 mt-3 mb-0">
-                                {{ "{:,}".format(over_budget|int) }}円の予算オーバーです。
-                            </div>
-                        {% endif %}
-                    </div>
-                {% else %}
-                    <p class="text-body-secondary mt-4 mb-3">
-                        今月の予算はまだ設定されていません。
-                    </p>
-
-                    <a
-                        href="{{ url_for('budget.budget_page') }}"
-                        class="btn btn-primary"
-                    >
-                        予算を設定する
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-7">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="h5 mb-3">最近の支出</h2>
-
-                {% if recent_expenses %}
-                    <ul class="list-group list-group-flush">
-                        {% for expense in recent_expenses %}
-                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>{{ expense.category }}</strong>
-                                    <div class="small text-body-secondary">
-                                        {{ expense.date.strftime("%Y/%m/%d") }}
-                                    </div>
-                                </div>
-
-                                <strong>
-                                    {{ "{:,}".format(expense.price|int) }}円
-                                </strong>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-body-secondary mb-0">
-                        まだ支出データがありません。
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- グラフ -->
-<div class="row g-3 mb-5">
-    <div class="col-lg-6">
+<div class="row g-4 mb-5">
+    <div class="col-12">
         <div class="card h-100 shadow-sm">
             <div class="card-body">
                 <h2 class="h5 mb-3">{{ selected_year }}年 月別収支</h2>
@@ -159,55 +97,100 @@
         </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-                <h2 class="h5 mb-3">カテゴリー別支出</h2>
-
-                {% if category_totals %}
-                    <div style="height: 320px;">
-                        <canvas id="expenseChart"></canvas>
-                    </div>
-                {% else %}
-                    <p class="text-body-secondary">
-                        支出データがありません。
-                    </p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- 検索 -->
-<div class="card shadow-sm mb-4">
+<!-- 絞り込み -->
+<div class="card filter-card mb-5">
     <div class="card-body">
-        <h2 class="h5 mb-3">取引を検索</h2>
+        <h2 class="h5 fw-bold mb-4">取引を絞り込む</h2>
 
-        <form method="GET" action="{{ url_for('expense.index') }}" class="row g-2">
-            <div class="col-md-4">
-                <input
-                    type="text"
-                    name="category"
-                    class="form-control"
-                    placeholder="カテゴリー名で検索"
-                    value="{{ request.args.get('category', '') }}"
+        <form
+            method="GET"
+            action="{{ url_for('expense.index') }}"
+            class="row g-3 align-items-end"
+        >
+            <!-- カテゴリー -->
+            <div class="col-md-3">
+                <label
+                    for="filterCategory"
+                    class="form-label filter-label"
                 >
+                    カテゴリー
+                </label>
+
+                <select
+                    id="filterCategory"
+                    name="category"
+                    class="form-select"
+                >
+                    <option value="">すべてのカテゴリー</option>
+
+                    <option
+                        value="給与"
+                        {% if request.args.get('category') == '給与' %}selected{% endif %}
+                    >
+                        給与
+                    </option>
+
+                    <option
+                        value="遊び"
+                        {% if request.args.get('category') == '遊び' %}selected{% endif %}
+                    >
+                        遊び
+                    </option>
+
+                    <option
+                        value="自己投資"
+                        {% if request.args.get('category') == '自己投資' %}selected{% endif %}
+                    >
+                        自己投資
+                    </option>
+                </select>
             </div>
 
-            <div class="col-md-2">
-                <select name="type" class="form-select">
-                    <option value="">すべて</option>
-                    <option value="支出" {% if request.args.get('type') == '支出' %}selected{% endif %}>
+            <!-- 種類 -->
+            <div class="col-md-3">
+                <label
+                    for="filterType"
+                    class="form-label filter-label"
+                >
+                    種類
+                </label>
+
+                <select
+                    id="filterType"
+                    name="type"
+                    class="form-select"
+                >
+                    <option value="">すべての種類</option>
+
+                    <option
+                        value="支出"
+                        {% if request.args.get('type') == '支出' %}selected{% endif %}
+                    >
                         支出
                     </option>
-                    <option value="収入" {% if request.args.get('type') == '収入' %}selected{% endif %}>
+
+                    <option
+                        value="収入"
+                        {% if request.args.get('type') == '収入' %}selected{% endif %}
+                    >
                         収入
                     </option>
                 </select>
             </div>
 
+            <!-- 対象月 -->
             <div class="col-md-3">
+                <label
+                    for="filterMonth"
+                    class="form-label filter-label"
+                >
+                    対象月
+                </label>
+
                 <input
+                    id="filterMonth"
                     type="month"
                     name="month"
                     class="form-control"
@@ -215,29 +198,65 @@
                 >
             </div>
 
+            <!-- 並び順 -->
             <div class="col-md-3">
-                <select name="sort" class="form-select">
-                    <option value="new" {% if request.args.get('sort', 'new') == 'new' %}selected{% endif %}>
+                <label
+                    for="filterSort"
+                    class="form-label filter-label"
+                >
+                    並び順
+                </label>
+
+                <select
+                    id="filterSort"
+                    name="sort"
+                    class="form-select"
+                >
+                    <option
+                        value="new"
+                        {% if request.args.get('sort', 'new') == 'new' %}selected{% endif %}
+                    >
                         日付（新しい順）
                     </option>
-                    <option value="old" {% if request.args.get('sort') == 'old' %}selected{% endif %}>
+
+                    <option
+                        value="old"
+                        {% if request.args.get('sort') == 'old' %}selected{% endif %}
+                    >
                         日付（古い順）
                     </option>
-                    <option value="high" {% if request.args.get('sort') == 'high' %}selected{% endif %}>
+
+                    <option
+                        value="high"
+                        {% if request.args.get('sort') == 'high' %}selected{% endif %}
+                    >
                         金額（高い順）
                     </option>
-                    <option value="low" {% if request.args.get('sort') == 'low' %}selected{% endif %}>
+
+                    <option
+                        value="low"
+                        {% if request.args.get('sort') == 'low' %}selected{% endif %}
+                    >
                         金額（低い順）
                     </option>
                 </select>
             </div>
 
-            <div class="col-12 d-flex gap-2">
-                <button class="btn btn-primary">検索</button>
-
-                <a href="{{ url_for('expense.index') }}" class="btn btn-outline-secondary">
+            <!-- ボタン -->
+            <div class="col-12 filter-actions">
+                <a
+                    href="{{ url_for('expense.index') }}"
+                    class="btn btn-link text-secondary text-decoration-none"
+                >
                     条件をクリア
                 </a>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary filter-submit-button"
+                >
+                    検索
+                </button>
             </div>
         </form>
     </div>
@@ -395,41 +414,5 @@ new Chart(document.getElementById("monthlyChart"), {
     }
 });
 
-{% if category_totals %}
-new Chart(document.getElementById("expenseChart"), {
-    type: "doughnut",
-    data: {
-        labels: [
-            {% for category, total in category_totals %}
-                "{{ category }}",
-            {% endfor %}
-        ],
-        datasets: [{
-            data: [
-                {% for category, total in category_totals %}
-                    {{ total }},
-                {% endfor %}
-            ],
-            backgroundColor: [
-                "#0d6efd",
-                "#20c997",
-                "#ffc107",
-                "#dc3545",
-                "#6f42c1",
-                "#fd7e14"
-            ]
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: "bottom"
-            }
-        }
-    }
-});
-{% endif %}
 </script>
 {% endblock %}
