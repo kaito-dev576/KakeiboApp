@@ -63,12 +63,9 @@ def register():
         db.session.commit()
 
         initial_categories = [
-            ("食費", "🍚", "支出"),
-            ("交通費", "🚃", "支出"),
-            ("日用品", "🛒", "支出"),
-            ("趣味", "🎮", "支出"),
             ("給与", "💰", "収入"),
-            ("副収入", "💵", "収入"),
+            ("遊び", "🎮", "支出"),
+            ("自己投資", "📚", "支出"),
         ]
 
         for name, icon, category_type in initial_categories:
