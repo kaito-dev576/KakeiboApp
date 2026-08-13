@@ -41,7 +41,7 @@ class KakeiboAppTestCase(unittest.TestCase):
             follow_redirects=True,
         )
 
-    def get_home_context(self):
+    def get_home_context(self, url="/"):
         recorded = []
 
         def record(sender, template, context, **extra):
@@ -49,7 +49,7 @@ class KakeiboAppTestCase(unittest.TestCase):
 
         template_rendered.connect(record, app)
         try:
-            self.client.get("/")
+            self.client.get(url)
         finally:
             template_rendered.disconnect(record, app)
         return recorded[-1]
@@ -58,13 +58,13 @@ class KakeiboAppTestCase(unittest.TestCase):
         response = self.register("new-user")
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(User.query.filter_by(username="new-user").first())
-        self.assertEqual(Category.query.count(), 6)
+        self.assertEqual(Category.query.count(), 3)
 
     def test_login_and_logout(self):
         db.session.add(User(username="tester", password=generate_password_hash("password123")))
         db.session.commit()
         response = self.post("/login", {"username": "tester", "password": "password123"}, follow_redirects=True)
-        self.assertIn("家計のダッシュボード", response.get_data(as_text=True))
+        self.assertIn("収支管理", response.get_data(as_text=True))
         response = self.post("/logout", follow_redirects=True)
         self.assertIn("おかえりなさい", response.get_data(as_text=True))
 
@@ -72,17 +72,56 @@ class KakeiboAppTestCase(unittest.TestCase):
         self.register()
         response = self.post("/add", {
             "price": "1200", "date": "2026-08-12", "type": "支出",
-            "category": "食費", "memo": "ランチ",
+            "category": "遊び", "memo": "",
         }, follow_redirects=True)
         self.assertIn("登録しました", response.get_data(as_text=True))
         item = Expense.query.one()
         response = self.post(f"/edit/{item.id}", {
             "price": "1500", "date": "2026-08-12", "type": "支出",
-            "category": "食費", "memo": "夕食",
+            "category": "遊び", "memo": "",
         }, follow_redirects=True)
         self.assertIn("取引を更新しました", response.get_data(as_text=True))
         self.assertEqual(db.session.get(Expense, item.id).price, 1500)
         self.post(f"/delete/{item.id}", follow_redirects=True)
+        self.assertEqual(Expense.query.count(), 0)
+
+    def test_edit_page_matches_add_form_and_has_no_memo_field(self):
+        self.register()
+        user = User.query.filter_by(username="tester").one()
+        item = Expense(
+            user_id=user.id,
+            type="支出",
+            price=1200,
+            category="遊び",
+            memo="",
+            date=date(2026, 8, 12),
+        )
+        db.session.add(item)
+        db.session.commit()
+
+        response = self.client.get(f"/edit/{item.id}")
+        html = response.get_data(as_text=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("取引を編集", html)
+        self.assertIn('inputmode="numeric"', html)
+        self.assertIn('name="date"', html)
+        self.assertIn('name="type"', html)
+        self.assertIn('name="category"', html)
+        self.assertNotIn('name="memo"', html)
+
+    def test_invalid_category_type_combination_is_rejected(self):
+        self.register()
+        response = self.post(
+            "/add",
+            {
+                "price": "1000",
+                "date": "2026-08-12",
+                "type": "収入",
+                "category": "遊び",
+            },
+            follow_redirects=True,
+        )
+        self.assertIn("選択したカテゴリーは使用できません", response.get_data(as_text=True))
         self.assertEqual(Expense.query.count(), 0)
 
     def test_user_cannot_edit_another_users_transaction(self):
@@ -96,6 +135,29 @@ class KakeiboAppTestCase(unittest.TestCase):
         response = self.client.get(f"/edit/{item.id}")
         self.assertEqual(response.status_code, 302)
         self.assertIsNotNone(db.session.get(Expense, item.id))
+
+        response = self.post(f"/delete/{item.id}")
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNotNone(db.session.get(Expense, item.id))
+
+    def test_search_filters_only_transaction_list(self):
+        self.register()
+        user = User.query.filter_by(username="tester").one()
+        db.session.add_all([
+            Expense(user_id=user.id, type="収入", price=200000, category="給与", date=date(2026, 8, 1)),
+            Expense(user_id=user.id, type="支出", price=5000, category="遊び", date=date(2026, 8, 2)),
+            Expense(user_id=user.id, type="支出", price=10000, category="自己投資", date=date(2026, 7, 3)),
+        ])
+        db.session.commit()
+
+        context = self.get_home_context("/?category=遊び&type=支出&month=2026-08")
+        self.assertEqual(context["count"], 1)
+        self.assertEqual(context["income_total"], 200000)
+        self.assertEqual(context["expense_total"], 15000)
+        self.assertEqual(context["balance"], 185000)
+        self.assertEqual(dict(context["monthly_income"])[8], 200000)
+        self.assertEqual(dict(context["monthly_expense"])[7], 10000)
+        self.assertEqual(dict(context["monthly_expense"])[8], 5000)
 
     def test_budget_is_saved_and_calculated(self):
         self.register()
