@@ -6,23 +6,59 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 
 expense = Blueprint("expense", __name__)
 
+ADD_CATEGORY_NAMES = ("給与", "遊び", "自己投資")
+ADD_CATEGORY_DEFINITIONS = (
+    ("給与", "💰", "収入"),
+    ("遊び", "🎮", "支出"),
+    ("自己投資", "📚", "支出"),
+)
+
+
+def ensure_add_categories():
+    existing_names = {
+        item.name
+        for item in Category.query.filter_by(user_id=session["user_id"]).all()
+    }
+
+    changed = False
+    for name, icon, category_type in ADD_CATEGORY_DEFINITIONS:
+        if name not in existing_names:
+            db.session.add(Category(
+                user_id=session["user_id"],
+                name=name,
+                icon=icon,
+                type=category_type,
+            ))
+            changed = True
+
+    if changed:
+        db.session.commit()
+
+
+def add_categories():
+    ensure_add_categories()
+    return (
+        Category.query
+        .filter(
+            Category.user_id == session["user_id"],
+            Category.name.in_(ADD_CATEGORY_NAMES),
+        )
+        .order_by(Category.type, Category.name)
+        .all()
+    )
+
 @expense.route('/add', methods=['GET', 'POST'])
 @login_required
 def add():
 
     if request.method == "POST":
 
-        categories = (
-            Category.query
-            .filter_by(user_id=session["user_id"])
-            .order_by(Category.name)
-            .all()
-        )
+        categories = add_categories()
 
         price_text = request.form["price"]
         category = request.form["category"]
         transaction_type = request.form["type"]
-        memo = request.form["memo"]
+        memo = ""
         date_text = request.form.get("date")
 
         try:
@@ -106,19 +142,10 @@ def add():
 
         return redirect(url_for("expense.index"))
 
-    categories = (
-        Category.query
-        .filter_by(user_id=session["user_id"])
-        .order_by(Category.name)
-        .all()
-    )
-
     return render_template(
         'add.html',
         today=date.today().strftime('%Y-%m-%d'),
-        categories=Category.query.filter_by(
-            user_id=session["user_id"]
-        ).all()
+        categories=add_categories(),
     )
 
 
@@ -160,7 +187,7 @@ def edit(id):
 
         expense.price = price
         expense.category = request.form["category"]
-        expense.memo = request.form["memo"]
+        expense.memo = ""
         expense.type = request.form["type"]
 
         date_text = request.form.get("date")
@@ -178,12 +205,7 @@ def edit(id):
 
         return redirect(url_for("expense.index"))
 
-    categories = (
-        Category.query
-        .filter_by(user_id=session["user_id"])
-        .order_by(Category.name)
-        .all()
-    )
+    categories = add_categories()
 
     return render_template(
         "edit.html",
@@ -227,9 +249,6 @@ def index():
 
     category = request.args.get("category")
     transaction_type = request.args.get("type")
-
-    # 取引一覧・検索・集計は、必ずログイン中の利用者のデータだけを対象にする
-    query = Expense.query.filter_by(user_id=session["user_id"])
     
     
 
@@ -245,10 +264,17 @@ def index():
         type=int
     )
 
-    # 画面で選択された年の取引だけに絞り込む
-    query = query.filter(
+    # 合計カードとグラフに使用する年間全体のデータ
+    dashboard_query = (
+        Expense.query
+        .filter_by(user_id=session["user_id"])
+        .filter(
             extract("year", Expense.date) == selected_year
         )
+    )
+
+    # 検索条件は取引一覧にだけ適用する
+    query = dashboard_query
 
     try:
         if month:
@@ -298,14 +324,16 @@ def index():
         per_page=10,
     )
 
-    income_total =(
-        query.filter(Expense.type =="収入")
+    income_total = (
+        dashboard_query
+        .filter(Expense.type == "収入")
         .with_entities(func.sum(Expense.price))
-        .scalar() or 0       
+        .scalar() or 0
     )
 
     expense_total = (
-        query.filter(Expense.type == "支出")
+        dashboard_query
+        .filter(Expense.type == "支出")
         .with_entities(func.sum(Expense.price))
         .scalar() or 0
     )
@@ -389,9 +417,9 @@ def index():
         .all()
     )
 
-    # 月別グラフに使う、収入・支出の月ごとの合計
     monthly_income = (
-        query.filter(Expense.type == "収入")
+        dashboard_query
+        .filter(Expense.type == "収入")
         .with_entities(
             extract("month", Expense.date),
             func.sum(Expense.price)
@@ -401,7 +429,8 @@ def index():
     )
 
     monthly_expense = (
-        query.filter(Expense.type == "支出")
+        dashboard_query
+        .filter(Expense.type == "支出")
         .with_entities(
             extract("month", Expense.date),
             func.sum(Expense.price)
