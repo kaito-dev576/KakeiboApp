@@ -3,6 +3,7 @@ import hmac
 import secrets
 
 from flask import Flask, abort, render_template, request, session
+from flask_migrate import Migrate
 from models import db, User
 from routes.auth import auth
 from routes.expense import expense
@@ -33,6 +34,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024
 
 db.init_app(app)
+migrate = Migrate(app, db)
 
 
 def generate_csrf_token():
@@ -90,9 +92,6 @@ app.register_blueprint(export)
 app.register_blueprint(budget)
 app.register_blueprint(profile, url_prefix="/profile")
 app.register_blueprint(category)
-
-with app.app_context():
-    db.create_all()
 
 if __name__ == "__main__":
     app.run(debug=os.environ.get("FLASK_DEBUG") == "1")

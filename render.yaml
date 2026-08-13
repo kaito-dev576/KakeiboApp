@@ -4,6 +4,7 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
+    preDeployCommand: flask --app app db upgrade
     startCommand: gunicorn app:app
     healthCheckPath: /health
     envVars:
