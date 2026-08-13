@@ -93,6 +93,15 @@ app.register_blueprint(budget)
 app.register_blueprint(profile, url_prefix="/profile")
 app.register_blueprint(category)
 
+# app.pyを直接起動するローカル利用でも、初回に必要なテーブルを準備する。
+# 公開環境の構造変更は引き続きFlask-Migrateで管理する。
+with app.app_context():
+    db.create_all()
+
 if __name__ == "__main__":
-    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")
+    # 以前起動したアプリとの混同を避けるため、ローカル版は5050番を使う。
+    app.run(
+        debug=os.environ.get("FLASK_DEBUG") == "1",
+        port=int(os.environ.get("PORT", "5050")),
+    )
 
