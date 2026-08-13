@@ -7,6 +7,8 @@
 
 body {
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
     background: linear-gradient(145deg, #f8fafc 0%, #eef2ff 55%, #f0fdfa 100%);
     color: #172033;
 }
@@ -29,13 +31,74 @@ body {
     box-shadow: 0 6px 16px rgba(79, 70, 229, .25);
 }
 
-.app-main { max-width: 1180px; }
+.app-main {
+    width: 100%;
+    max-width: 1180px;
+    flex: 1;
+    padding-top: 2.75rem;
+    padding-bottom: 5rem;
+}
+
+.app-main > * + * { margin-top: .5rem; }
 
 .card {
     border-color: var(--app-border);
     border-radius: 1rem;
     box-shadow: 0 10px 30px rgba(15, 23, 42, .06);
 }
+
+.card-body { padding: 1.75rem; }
+
+.summary-grid { row-gap: 1.5rem; }
+.summary-card .card-body { padding: 2rem; }
+
+.dashboard-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.dashboard-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: .9rem;
+}
+
+.user-menu-button {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    padding: .65rem .9rem;
+    border: 1px solid var(--app-border);
+    border-radius: .8rem;
+    background: var(--app-surface);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, .06);
+    color: #172033;
+}
+
+.user-menu-button:hover,
+.user-menu-button:focus {
+    border-color: rgba(79, 70, 229, .35);
+    background: #fff;
+}
+
+.user-menu-icon { font-size: 1.1rem; }
+.user-menu-name { min-width: 4rem; text-align: left; }
+.add-transaction-button { min-width: 9.5rem; }
+
+.user-menu-dropdown {
+    min-width: 12rem;
+    margin-top: .55rem !important;
+    padding: .5rem;
+    border-color: var(--app-border);
+    border-radius: .85rem;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, .12);
+}
+
+.user-menu-dropdown .dropdown-item { border-radius: .55rem; padding: .65rem .75rem; }
 
 .summary-card { color: #fff; overflow: hidden; }
 .summary-income { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
@@ -65,7 +128,7 @@ body {
 [data-bs-theme="dark"] .app-navbar, [data-bs-theme="dark"] .card, [data-bs-theme="dark"] .table-responsive { background: rgba(17, 24, 39, .92); }
 
 @media (max-width: 767.98px) {
-    .app-main { padding-inline: 1rem; }
+    .app-main { padding: 2.25rem 1rem 3.5rem; }
     .app-main > .d-flex.justify-content-between.align-items-center {
         align-items: stretch !important;
         flex-direction: column;
@@ -75,8 +138,49 @@ body {
         width: 100%;
         white-space: nowrap;
     }
+    .dashboard-title h1 {
+        font-size: 1.85rem;
+    }
+
+    .dashboard-title p {
+        font-size: 0.9rem;
+    }
+    .filter-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    .filter-actions .btn {
+        width: 100%;
+    }
     .summary-card .fs-2 { font-size: 1.65rem !important; }
-    .navbar-collapse { padding-top: 1rem; }
-    .navbar .d-flex { align-items: stretch !important; flex-direction: column; }
+    .card-body { padding: 1.35rem; }
+    .user-menu-button { width: auto; }
+    .dashboard-header { flex-direction: column; gap: 1.25rem; margin-bottom: 2rem; }
+    .dashboard-actions { width: 100%; align-items: stretch; }
+    .dashboard-actions .dropdown,
+    .user-menu-button,
+    .add-transaction-button { width: 100%; }
+    .user-menu-button { justify-content: center; }
+    .user-menu-name { min-width: 0; }
     .table { min-width: 760px; }
+}
+
+.dashboard-title h1 {
+    margin: 0;
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+}
+
+.dashboard-title p {
+    margin: 0.4rem 0 0;
+    color: #64748b;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.dashboard-header {
+    margin-bottom: 2rem;
 }
