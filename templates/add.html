@@ -20,6 +20,14 @@
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endwith %}
+
     {% if error %}
     <div class="alert alert-danger">
         {{ error }}
@@ -35,10 +43,11 @@
         </label>
 
         <input
-            type="number"
+            type="text"
             name="price"
             class="form-control"
-            min="1"
+            inputmode="numeric"
+            pattern="[0-9]+"
             value="{{ price if price else '' }}"
         >
 
@@ -126,27 +135,6 @@
             {% endfor %}
 
         </select>
-
-
-    </div>
-
-
-
-
-    <!-- メモ -->
-    <div class="mb-3">
-
-        <label class="form-label">
-            メモ
-        </label>
-
-
-        <textarea
-            name="memo"
-            class="form-control"
-            rows="3"
-            placeholder="例：友達とランチ"
-        >{{ request.form.get("memo", "") }}</textarea>
 
 
     </div>
